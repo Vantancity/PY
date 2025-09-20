@@ -36,6 +36,19 @@ async def start(message: Message):
     else:
         await message.answer(f"Привет {name}, рад тебя видеть!")
         
+@dp.message(Command("info"))
+async def user_info(message: Message):
+    user = message.from_user
+    username = user.username or "Нет username"
+    premium = "Да" if user.is_premium else "Нет"
+    info_text = f"""
+👤 Имя: {user.first_name}
+🆔 ID: {user.id}
+📛 Username: @{username}
+⭐ Премиум: {premium}
+    """
+    await message.answer(info_text)
+        
 @dp.message(Command("advice"))
 async def advice(message: Message):
         await message.answer(random.choice(daily_tips))
