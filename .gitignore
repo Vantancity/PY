@@ -2,6 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Ignored project files
+Notes.py
+ClassesWork.py
+test.py
 *.so
 .Python
 env/
