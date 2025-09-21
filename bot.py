@@ -1,9 +1,10 @@
 from aiogram import Bot, Dispatcher
-from aiogram.types import Message
+from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 import random
 from datetime import datetime
-
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 TOKEN = '8243151682:AAHcITfIJKMBtv4MV5cIZfLVrv4WdMyzS14'
 bot = Bot(TOKEN)
 
@@ -27,27 +28,43 @@ daily_tips = [
 
 dp = Dispatcher()
 
+my_keyboard = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="/start"), KeyboardButton(text="/premium")]],
+            resize_keyboard=True
+            )
+
+class User(StatesGroup):
+    name = State()
+    age = State()
+
 @dp.message(Command("start"))
-async def start(message: Message):
+async def start(message: Message, state: FSMContext):
+        await message.answer("Нажимай на нужную кнопку и подпписывайс на 10 каналов-партнёров", reply_markup=my_keyboard)
+        await message.answer("Назови своё имя: ")
+        await state.set_state(User.name)
+        
+@dp.message(User.name)
+async def get_name(message: Message, state: FSMContext):
+    await state.update_data(name=message.text)
+    await message.answer("Назови свой возраст: ")
+    await state.set_state(User.age)
+
+@dp.message(User.age)
+async def get_age(message: Message, state: FSMContext):
+    await state.update_data(age=message.text)
+    data = await state.get_data()
+    age = data.get("age")
+    name = data.get("name")
+    await message.answer(f"Тебе {age} лет и тебя зовут {name}")
+    await state.clear()
+        
+@dp.message(Command("premium"))
+async def prem(message: Message):
     name = message.from_user.first_name
     premium = message.from_user.is_premium
     if premium:
         await message.answer(f"Привет {name}, ты с премкой, поздравляю!")
     else:
         await message.answer(f"Привет {name}, рад тебя видеть!")
-        
-@dp.message(Command("info"))
-async def user_info(message: Message):
-    user = message.from_user
-    username = user.username or "Нет username"
-    premium = "Да" if user.is_premium else "Нет"
-    info_text = f"""
-👤 Имя: {user.first_name}
-🆔 ID: {user.id}
-📛 Username: @{username}
-⭐ Премиум: {premium}
-    """
-    await message.answer(info_text)
         
 @dp.message(Command("advice"))
 async def advice(message: Message):
@@ -78,4 +95,4 @@ async def show_time(message: Message):
     await message.answer(f"Текущее время: {current_time}")
 
 if __name__ == "__main__":
-    dp.run_polling(bot)
+    dp.run_polling(bot) 
